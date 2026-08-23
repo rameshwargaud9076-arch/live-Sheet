@@ -1,6 +1,5 @@
-/* =====================================================
+ /* =====================================================
    GOOGLE SHEET DASHBOARD
-   COMPLETE JAVASCRIPT
 ===================================================== */
 
 
@@ -9,26 +8,15 @@
 ===================================================== */
 
 const SHEET_ID =
-    "AKfycbwyhHLJOglFCWRefVvhewCj_3lWxvpPJ53BGlbCWfT3WQq7g7W33KH5SouLu5WxjJwSag";
+    "1Vrcd5hvHrTUcm8YT6jH6jHn_6cT4Vw1bHfPoPB-x_dQ";
 
 
 /* =====================================================
-   GOOGLE APPS SCRIPT API URL
+   GOOGLE APPS SCRIPT WEB APP
 ===================================================== */
 
-/*
-   IMPORTANT:
-
-   Yaha deployment ke baad
-   Apps Script Web App URL paste karna hai.
-
-   Example:
-
-   https://script.google.com/macros/s/XXXXXXXX/exec
-*/
-
 const API_URL =
-    "https://script.google.com/macros/s/AKfycbwyhHLJOglFCWRefVvhewCj_3lWxvpPJ53BGlbCWfT3WQq7g7W33KH5SouLu5WxjJwSag/exec";
+    "https://script.google.com/macros/s/AKfycby6kV4IzWzpKNzSlwwKm_HyLYmKTV9VvIjHku065owqZFJuCfSF28l5r_e4MH4J4ljuVw/exec";
 
 
 /* =====================================================
@@ -37,22 +25,11 @@ const API_URL =
 
 const ROWS_PER_PAGE = 25;
 
-
-/*
-   Dashboard cards me ye columns
-   nahi dikhengi.
-*/
-
 const HIDDEN_DASHBOARD_COLUMNS = [
-
     "sr no",
-
     "srno",
-
     "serial no",
-
     "serial number"
-
 ];
 
 
@@ -61,13 +38,10 @@ const HIDDEN_DASHBOARD_COLUMNS = [
 ===================================================== */
 
 let allSheets = [];
-
 let currentSheet = null;
 
 let sheetHeaders = [];
-
 let sheetRows = [];
-
 let filteredRows = [];
 
 let currentPage = 1;
@@ -78,140 +52,85 @@ let currentPage = 1;
 ===================================================== */
 
 const statsContainer =
-    document.getElementById(
-        "statsContainer"
-    );
-
+    document.getElementById("statsContainer");
 
 const totalRecordsElement =
-    document.getElementById(
-        "totalRecords"
-    );
-
+    document.getElementById("totalRecords");
 
 const tableHead =
-    document.getElementById(
-        "tableHead"
-    );
-
+    document.getElementById("tableHead");
 
 const tableBody =
-    document.getElementById(
-        "tableBody"
-    );
-
+    document.getElementById("tableBody");
 
 const allTableHead =
-    document.getElementById(
-        "allTableHead"
-    );
-
+    document.getElementById("allTableHead");
 
 const allTableBody =
-    document.getElementById(
-        "allTableBody"
-    );
-
+    document.getElementById("allTableBody");
 
 const pagination =
-    document.getElementById(
-        "pagination"
-    );
-
+    document.getElementById("pagination");
 
 const searchInput =
-    document.getElementById(
-        "searchInput"
-    );
-
+    document.getElementById("searchInput");
 
 const columnFilter =
-    document.getElementById(
-        "columnFilter"
-    );
-
+    document.getElementById("columnFilter");
 
 const clearSearch =
-    document.getElementById(
-        "clearSearch"
-    );
-
+    document.getElementById("clearSearch");
 
 const refreshButton =
-    document.getElementById(
-        "refreshButton"
-    );
-
+    document.getElementById("refreshButton");
 
 const connectionStatus =
-    document.getElementById(
-        "connectionStatus"
-    );
-
+    document.getElementById("connectionStatus");
 
 const lastUpdated =
-    document.getElementById(
-        "lastUpdated"
-    );
-
+    document.getElementById("lastUpdated");
 
 const recordCount =
-    document.getElementById(
-        "recordCount"
-    );
-
+    document.getElementById("recordCount");
 
 const allRecordCount =
-    document.getElementById(
-        "allRecordCount"
-    );
-
+    document.getElementById("allRecordCount");
 
 const columnCards =
-    document.getElementById(
-        "columnCards"
-    );
-
+    document.getElementById("columnCards");
 
 const sheetTabs =
-    document.getElementById(
-        "sheetTabs"
-    );
-
+    document.getElementById("sheetTabs");
 
 const currentSheetName =
-    document.getElementById(
-        "currentSheetName"
-    );
-
+    document.getElementById("currentSheetName");
 
 const currentSheetRows =
-    document.getElementById(
-        "currentSheetRows"
-    );
-
+    document.getElementById("currentSheetRows");
 
 const connectionDot =
-    document.getElementById(
-        "connectionDot"
-    );
-
+    document.getElementById("connectionDot");
 
 const connectionText =
-    document.getElementById(
-        "connectionText"
-    );
+    document.getElementById("connectionText");
+
+const pageTitle =
+    document.getElementById("pageTitle");
+
+const sidebar =
+    document.getElementById("sidebar");
+
+const mobileMenu =
+    document.getElementById("mobileMenu");
 
 
 /* =====================================================
-   CLEAN
+   CLEAN VALUE
 ===================================================== */
 
 function cleanValue(value) {
 
-    return String(
-        value ?? ""
-    ).trim();
+    return String(value ?? "").trim();
 
 }
 
@@ -224,66 +143,40 @@ function escapeHTML(value) {
 
     return String(value)
 
-        .replace(
-            /&/g,
-            "&amp;"
-        )
+        .replace(/&/g, "&amp;")
 
-        .replace(
-            /</g,
-            "&lt;"
-        )
+        .replace(/</g, "&lt;")
 
-        .replace(
-            />/g,
-            "&gt;"
-        )
+        .replace(/>/g, "&gt;")
 
-        .replace(
-            /"/g,
-            "&quot;"
-        )
+        .replace(/"/g, "&quot;")
 
-        .replace(
-            /'/g,
-            "&#039;"
-        );
+        .replace(/'/g, "&#039;");
 
 }
 
 
 /* =====================================================
-   NORMALIZE
+   NORMALIZE HEADER
 ===================================================== */
 
-function normalizeHeader(
-    value
-) {
+function normalizeHeader(value) {
 
-    return cleanValue(
-        value
-    )
+    return cleanValue(value)
         .toLowerCase()
-        .replace(
-            /\s+/g,
-            " "
-        );
+        .replace(/\s+/g, " ");
 
 }
 
 
 /* =====================================================
-   HIDDEN DASHBOARD COLUMN
+   HIDDEN COLUMN
 ===================================================== */
 
-function isHiddenDashboardColumn(
-    header
-) {
+function isHiddenDashboardColumn(header) {
 
     return HIDDEN_DASHBOARD_COLUMNS.includes(
-        normalizeHeader(
-            header
-        )
+        normalizeHeader(header)
     );
 
 }
@@ -293,52 +186,28 @@ function isHiddenDashboardColumn(
    STATUS
 ===================================================== */
 
-function setStatus(
-    type,
-    text
-) {
+function setStatus(type, text) {
 
     connectionStatus.className =
         "status " + type;
 
-
     connectionStatus.innerHTML = `
-
         <span></span>
-
         ${escapeHTML(text)}
-
     `;
-
 
     connectionDot.className =
         "connection-dot";
 
-
-    if (
-        type === "live"
-    ) {
-
-        connectionDot.classList.add(
-            "live"
-        );
-
+    if (type === "live") {
+        connectionDot.classList.add("live");
     }
 
-
-    if (
-        type === "error"
-    ) {
-
-        connectionDot.classList.add(
-            "error"
-        );
-
+    if (type === "error") {
+        connectionDot.classList.add("error");
     }
 
-
-    connectionText.textContent =
-        text;
+    connectionText.textContent = text;
 
 }
 
@@ -347,63 +216,32 @@ function setStatus(
    API REQUEST
 ===================================================== */
 
-async function apiRequest(
-    action,
-    gid = ""
-) {
-
-    if (
-        API_URL ===
-        "PASTE_YOUR_APPS_SCRIPT_URL_HERE"
-    ) {
-
-        throw new Error(
-
-            "app.js me API_URL me Google Apps Script URL paste karo."
-
-        );
-
-    }
-
+async function apiRequest(action, gid = "") {
 
     let url =
         API_URL +
         "?action=" +
-        encodeURIComponent(
-            action
-        );
+        encodeURIComponent(action);
 
-
-    if (
-        gid !== ""
-    ) {
+    if (gid !== "") {
 
         url +=
             "&gid=" +
-            encodeURIComponent(
-                gid
-            );
+            encodeURIComponent(gid);
 
     }
-
 
     url +=
         "&t=" +
         Date.now();
 
-
     const response =
-        await fetch(
-            url,
-            {
-                cache: "no-store"
-            }
-        );
+        await fetch(url, {
+            method: "GET",
+            cache: "no-store"
+        });
 
-
-    if (
-        !response.ok
-    ) {
+    if (!response.ok) {
 
         throw new Error(
             "Server response error: " +
@@ -412,14 +250,10 @@ async function apiRequest(
 
     }
 
-
     const data =
         await response.json();
 
-
-    if (
-        data.success === false
-    ) {
+    if (data.success === false) {
 
         throw new Error(
             data.error ||
@@ -428,14 +262,13 @@ async function apiRequest(
 
     }
 
-
     return data;
 
 }
 
 
 /* =====================================================
-   LOAD SHEET LIST
+   LOAD SHEETS
 ===================================================== */
 
 async function loadSheetList() {
@@ -445,29 +278,48 @@ async function loadSheetList() {
         "Loading sheets..."
     );
 
-
     const data =
-        await apiRequest(
-            "sheets"
-        );
-
+        await apiRequest("sheets");
 
     allSheets =
         data.sheets || [];
 
-
     renderSheetTabs();
 
-
-    if (
-        allSheets.length === 0
-    ) {
+    if (allSheets.length === 0) {
 
         throw new Error(
             "Google Sheet me koi tab nahi mila."
         );
 
     }
+
+
+    /* =============================================
+       SAVED SHEET
+    ============================================== */
+
+    const savedGid =
+        localStorage.getItem(
+            "selectedSheetGid"
+        );
+
+    let selected =
+        allSheets.find(
+            sheet =>
+                String(sheet.gid) ===
+                String(savedGid)
+        );
+
+
+    if (!selected) {
+        selected = allSheets[0];
+    }
+
+
+    await selectSheet(
+        selected
+    );
 
 }
 
@@ -480,77 +332,48 @@ function renderSheetTabs() {
 
     sheetTabs.innerHTML = "";
 
+    allSheets.forEach(sheet => {
 
-    allSheets.forEach(
-        sheet => {
+        const button =
+            document.createElement("button");
 
-            const button =
-                document.createElement(
-                    "button"
-                );
+        button.className =
+            "sheet-tab";
 
+        if (
+            currentSheet &&
+            String(currentSheet.gid) ===
+            String(sheet.gid)
+        ) {
 
-            button.className =
-                "sheet-tab";
-
-
-            if (
-                currentSheet &&
-                String(
-                    currentSheet.gid
-                ) ===
-                String(
-                    sheet.gid
-                )
-            ) {
-
-                button.classList.add(
-                    "active"
-                );
-
-            }
-
-
-            button.innerHTML = `
-
-                <span
-                    class="sheet-tab-icon"
-                >
-
-                    <i class="fa-solid fa-table"></i>
-
-                </span>
-
-
-                <span>
-
-                    ${escapeHTML(
-                sheet.name
-            )}
-
-                </span>
-
-            `;
-
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    selectSheet(
-                        sheet
-                    );
-
-                }
-            );
-
-
-            sheetTabs.appendChild(
-                button
-            );
+            button.classList.add("active");
 
         }
-    );
+
+        button.innerHTML = `
+            <span class="sheet-tab-icon">
+                <i class="fa-solid fa-table"></i>
+            </span>
+
+            <span>
+                ${escapeHTML(sheet.name)}
+            </span>
+        `;
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                selectSheet(sheet);
+
+            }
+        );
+
+        sheetTabs.appendChild(
+            button
+        );
+
+    });
 
 }
 
@@ -559,15 +382,12 @@ function renderSheetTabs() {
    LOAD SHEET
 ===================================================== */
 
-async function loadSheet(
-    sheet
-) {
+async function loadSheet(sheet) {
 
     setStatus(
         "connecting",
         "Loading " + sheet.name
     );
-
 
     const data =
         await apiRequest(
@@ -575,45 +395,31 @@ async function loadSheet(
             sheet.gid
         );
 
-
     sheetHeaders =
-        Array.isArray(
-            data.headers
-        )
+        Array.isArray(data.headers)
             ? data.headers
             : [];
 
-
     sheetRows =
-        Array.isArray(
-            data.rows
-        )
+        Array.isArray(data.rows)
             ? data.rows
             : [];
-
 
     filteredRows =
         [...sheetRows];
 
-
     currentPage = 1;
 
-
     renderCurrentSheet();
-
 
     setStatus(
         "live",
         "Google Sheet Live"
     );
 
-
     lastUpdated.textContent =
         "Updated: " +
-        new Date()
-            .toLocaleString(
-                "en-IN"
-            );
+        new Date().toLocaleString("en-IN");
 
 }
 
@@ -622,97 +428,48 @@ async function loadSheet(
    SELECT SHEET
 ===================================================== */
 
-async function selectSheet(
-    sheet
-) {
+async function selectSheet(sheet) {
 
-    currentSheet =
-        sheet;
-
+    currentSheet = sheet;
 
     currentSheetName.textContent =
         sheet.name;
 
-
     renderSheetTabs();
-
 
     localStorage.setItem(
         "selectedSheetGid",
-        String(
-            sheet.gid
-        )
+        String(sheet.gid)
     );
 
-
-    /*
-       Clear old table
-    */
-
     tableBody.innerHTML = `
-
         <tr>
-
-            <td
-                colspan="100"
-                class="loading-row"
-            >
-
-                <i
-                    class="fa-solid fa-spinner fa-spin"
-                ></i>
-
-                Loading ${escapeHTML(
-        sheet.name
-    )}...
-
+            <td colspan="100" class="loading-row">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Loading ${escapeHTML(sheet.name)}...
             </td>
-
         </tr>
-
     `;
-
 
     try {
 
-        await loadSheet(
-            sheet
-        );
+        await loadSheet(sheet);
 
-    }
+    } catch (error) {
 
-    catch (
-    error
-    ) {
-
-        console.error(
-            error
-        );
-
+        console.error(error);
 
         setStatus(
             "error",
             "Load Failed"
         );
 
-
         tableBody.innerHTML = `
-
             <tr>
-
-                <td
-                    colspan="100"
-                    class="error-row"
-                >
-
-                    ${escapeHTML(
-            error.message
-        )}
-
+                <td colspan="100" class="error-row">
+                    ${escapeHTML(error.message)}
                 </td>
-
             </tr>
-
         `;
 
     }
@@ -729,21 +486,13 @@ function renderCurrentSheet() {
     totalRecordsElement.textContent =
         sheetRows.length;
 
-
     currentSheetRows.textContent =
         sheetRows.length +
         " Records";
 
+    createTableHeader(tableHead);
 
-    createTableHeader(
-        tableHead
-    );
-
-
-    createTableHeader(
-        allTableHead
-    );
-
+    createTableHeader(allTableHead);
 
     renderColumnFilter();
 
@@ -762,37 +511,23 @@ function renderCurrentSheet() {
    TABLE HEADER
 ===================================================== */
 
-function createTableHeader(
-    target
-) {
+function createTableHeader(target) {
 
     target.innerHTML = `
-
         <tr>
-
-            <th>
-                #
-            </th>
+            <th>#</th>
 
             ${sheetHeaders
-            .map(
-                header => `
-
-                            <th>
-
-                                ${escapeHTML(
-                    header
-                )}
-
-                            </th>
-
-                        `
-            )
-            .join("")
-        }
-
+                .map(
+                    header => `
+                        <th>
+                            ${escapeHTML(header)}
+                        </th>
+                    `
+                )
+                .join("")
+            }
         </tr>
-
     `;
 
 }
@@ -802,61 +537,35 @@ function createTableHeader(
    TABLE ROW
 ===================================================== */
 
-function createTableRow(
-    row,
-    number
-) {
+function createTableRow(row, number) {
 
     let html = `
-
         <tr>
-
-            <td>
+            <td class="serial-value">
                 ${number}
             </td>
-
     `;
 
+    sheetHeaders.forEach(header => {
 
-    sheetHeaders.forEach(
-        header => {
+        const value =
+            cleanValue(row[header]);
 
-            const value =
-                cleanValue(
-                    row[header]
-                );
-
-
-            html += `
-
-                <td
-                    class="${value
-                    ? ""
-                    : "empty-cell"
-                }"
-                >
-
-                    ${value
-                    ? escapeHTML(
-                        value
-                    )
-                    : "—"
+        html += `
+            <td class="${value ? "" : "empty-cell"}">
+                ${
+                    value
+                        ? escapeHTML(value)
+                        : "—"
                 }
+            </td>
+        `;
 
-                </td>
-
-            `;
-
-        }
-    );
-
+    });
 
     html += `
-
         </tr>
-
     `;
-
 
     return html;
 
@@ -870,62 +579,39 @@ function createTableRow(
 function filterData() {
 
     const search =
-        cleanValue(
-            searchInput.value
-        )
+        cleanValue(searchInput.value)
             .toLowerCase();
-
 
     const selectedColumn =
         columnFilter.value;
 
-
     filteredRows =
-        sheetRows.filter(
-            row => {
+        sheetRows.filter(row => {
 
-                if (
-                    search === ""
-                ) {
+            if (search === "") {
+                return true;
+            }
 
-                    return true;
+            if (selectedColumn === "all") {
 
-                }
-
-
-                if (
-                    selectedColumn ===
-                    "all"
-                ) {
-
-                    return sheetHeaders.some(
-                        header =>
-                            cleanValue(
-                                row[header]
-                            )
-                                .toLowerCase()
-                                .includes(
-                                    search
-                                )
-                    );
-
-                }
-
-
-                return cleanValue(
-                    row[selectedColumn]
-                )
-                    .toLowerCase()
-                    .includes(
-                        search
-                    );
+                return sheetHeaders.some(
+                    header =>
+                        cleanValue(row[header])
+                            .toLowerCase()
+                            .includes(search)
+                );
 
             }
-        );
 
+            return cleanValue(
+                row[selectedColumn]
+            )
+                .toLowerCase()
+                .includes(search);
+
+        });
 
     currentPage = 1;
-
 
     renderMainTable();
 
@@ -941,7 +627,6 @@ function renderMainTable() {
     const total =
         filteredRows.length;
 
-
     const totalPages =
         Math.max(
             1,
@@ -951,85 +636,49 @@ function renderMainTable() {
             )
         );
 
-
-    if (
-        currentPage >
-        totalPages
-    ) {
-
-        currentPage =
-            totalPages;
-
+    if (currentPage > totalPages) {
+        currentPage = totalPages;
     }
 
-
     const start =
-        (
-            currentPage - 1
-        ) *
+        (currentPage - 1) *
         ROWS_PER_PAGE;
-
 
     const pageRows =
         filteredRows.slice(
             start,
-            start +
-            ROWS_PER_PAGE
+            start + ROWS_PER_PAGE
         );
 
-
-    if (
-        pageRows.length === 0
-    ) {
+    if (pageRows.length === 0) {
 
         tableBody.innerHTML = `
-
             <tr>
-
-                <td
-                    colspan="100"
-                    class="loading-row"
-                >
-
+                <td colspan="100" class="loading-row">
                     No records found.
-
                 </td>
-
             </tr>
-
         `;
 
-    }
-
-    else {
+    } else {
 
         tableBody.innerHTML =
             pageRows
                 .map(
-                    (
-                        row,
-                        index
-                    ) =>
+                    (row, index) =>
                         createTableRow(
                             row,
-                            start +
-                            index +
-                            1
+                            start + index + 1
                         )
                 )
                 .join("");
 
     }
 
-
     recordCount.textContent =
-        total +
-        " Records";
+        total + " Records";
 
-
-    renderPagination(
-        totalPages
-    );
+    renderPagination(totalPages);
 
 }
 
@@ -1044,44 +693,26 @@ function renderAllRecords() {
 
     allTableBody.innerHTML = "";
 
-
     createTableHeader(
         allTableHead
     );
 
-
-    if (
-        sheetRows.length === 0
-    ) {
+    if (sheetRows.length === 0) {
 
         allTableBody.innerHTML = `
-
             <tr>
-
-                <td
-                    colspan="100"
-                    class="loading-row"
-                >
-
+                <td colspan="100" class="loading-row">
                     No records found.
-
                 </td>
-
             </tr>
-
         `;
 
-    }
-
-    else {
+    } else {
 
         allTableBody.innerHTML =
             sheetRows
                 .map(
-                    (
-                        row,
-                        index
-                    ) =>
+                    (row, index) =>
                         createTableRow(
                             row,
                             index + 1
@@ -1090,7 +721,6 @@ function renderAllRecords() {
                 .join("");
 
     }
-
 
     allRecordCount.textContent =
         sheetRows.length +
@@ -1103,60 +733,44 @@ function renderAllRecords() {
    PAGINATION
 ===================================================== */
 
-function renderPagination(
-    totalPages
-) {
+function renderPagination(totalPages) {
 
     pagination.innerHTML = "";
 
-
-    if (
-        totalPages <= 1
-    ) {
-
+    if (totalPages <= 1) {
         return;
-
     }
 
 
-    const previous =
-        document.createElement(
-            "button"
-        );
+    /* PREVIOUS */
 
+    const previous =
+        document.createElement("button");
 
     previous.className =
         "page-button";
 
-
-    previous.innerHTML =
-        "‹";
-
+    previous.innerHTML = "‹";
 
     previous.disabled =
         currentPage === 1;
 
+    previous.onclick = () => {
 
-    previous.onclick =
-        () => {
+        if (currentPage > 1) {
 
-            if (
-                currentPage > 1
-            ) {
+            currentPage--;
 
-                currentPage--;
+            renderMainTable();
 
-                renderMainTable();
+        }
 
-            }
+    };
 
-        };
+    pagination.appendChild(previous);
 
 
-    pagination.appendChild(
-        previous
-    );
-
+    /* PAGES */
 
     for (
         let i = 1;
@@ -1165,18 +779,12 @@ function renderPagination(
     ) {
 
         const button =
-            document.createElement(
-                "button"
-            );
-
+            document.createElement("button");
 
         button.className =
             "page-button";
 
-
-        if (
-            i === currentPage
-        ) {
+        if (i === currentPage) {
 
             button.classList.add(
                 "active"
@@ -1184,67 +792,50 @@ function renderPagination(
 
         }
 
+        button.textContent = i;
 
-        button.textContent =
-            i;
+        button.onclick = () => {
 
+            currentPage = i;
 
-        button.onclick =
-            () => {
+            renderMainTable();
 
-                currentPage = i;
+        };
 
-                renderMainTable();
-
-            };
-
-
-        pagination.appendChild(
-            button
-        );
+        pagination.appendChild(button);
 
     }
 
 
-    const next =
-        document.createElement(
-            "button"
-        );
+    /* NEXT */
 
+    const next =
+        document.createElement("button");
 
     next.className =
         "page-button";
 
-
-    next.innerHTML =
-        "›";
-
+    next.innerHTML = "›";
 
     next.disabled =
-        currentPage ===
-        totalPages;
+        currentPage === totalPages;
 
+    next.onclick = () => {
 
-    next.onclick =
-        () => {
+        if (
+            currentPage <
+            totalPages
+        ) {
 
-            if (
-                currentPage <
-                totalPages
-            ) {
+            currentPage++;
 
-                currentPage++;
+            renderMainTable();
 
-                renderMainTable();
+        }
 
-            }
+    };
 
-        };
-
-
-    pagination.appendChild(
-        next
-    );
+    pagination.appendChild(next);
 
 }
 
@@ -1256,39 +847,25 @@ function renderPagination(
 function renderColumnFilter() {
 
     columnFilter.innerHTML = `
-
         <option value="all">
-
             All Columns
-
         </option>
-
     `;
 
+    sheetHeaders.forEach(header => {
 
-    sheetHeaders.forEach(
-        header => {
+        const option =
+            document.createElement("option");
 
-            const option =
-                document.createElement(
-                    "option"
-                );
+        option.value = header;
 
+        option.textContent = header;
 
-            option.value =
-                header;
+        columnFilter.appendChild(
+            option
+        );
 
-
-            option.textContent =
-                header;
-
-
-            columnFilter.appendChild(
-                option
-            );
-
-        }
-    );
+    });
 
 }
 
@@ -1299,107 +876,67 @@ function renderColumnFilter() {
 
 function renderStats() {
 
-    /*
-       Total card ko preserve karo.
-       Baaki dynamic cards delete karo.
-    */
-
     const cards =
         statsContainer.querySelectorAll(
             ".stat-card"
         );
 
-
     cards.forEach(
-        (
-            card,
-            index
-        ) => {
+        (card, index) => {
 
-            if (
-                index > 0
-            ) {
-
+            if (index > 0) {
                 card.remove();
-
             }
 
         }
     );
 
 
-    /*
-       Har column ka filled count.
+    sheetHeaders.forEach(header => {
 
-       SR NO skip.
-    */
-
-    sheetHeaders.forEach(
-        header => {
-
-            if (
-                isHiddenDashboardColumn(
-                    header
-                )
-            ) {
-
-                return;
-
-            }
-
-
-            const filledCount =
-                sheetRows.filter(
-                    row =>
-                        cleanValue(
-                            row[header]
-                        ) !== ""
-                ).length;
-
-
-            const card =
-                document.createElement(
-                    "div"
-                );
-
-
-            card.className =
-                "stat-card";
-
-
-            card.innerHTML = `
-
-                <div class="stat-label">
-
-                    ${escapeHTML(
+        if (
+            isHiddenDashboardColumn(
                 header
-            )}
-
-                </div>
-
-
-                <div class="stat-number">
-
-                    ${filledCount}
-
-                </div>
-
-
-                <div class="stat-description">
-
-                    Filled records
-
-                </div>
-
-            `;
-
-
-            statsContainer.appendChild(
-                card
-            );
-
+            )
+        ) {
+            return;
         }
-    );
+
+
+        const filledCount =
+            sheetRows.filter(
+                row =>
+                    cleanValue(
+                        row[header]
+                    ) !== ""
+            ).length;
+
+
+        const card =
+            document.createElement("div");
+
+        card.className =
+            "stat-card";
+
+        card.innerHTML = `
+            <div class="stat-label">
+                ${escapeHTML(header)}
+            </div>
+
+            <div class="stat-number">
+                ${filledCount}
+            </div>
+
+            <div class="stat-description">
+                Filled records
+            </div>
+        `;
+
+        statsContainer.appendChild(
+            card
+        );
+
+    });
 
 }
 
@@ -1412,9 +949,20 @@ function renderColumnCards() {
 
     columnCards.innerHTML = "";
 
+    if (sheetHeaders.length === 0) {
+
+        columnCards.innerHTML = `
+            <div class="loading-row">
+                No columns found.
+            </div>
+        `;
+
+        return;
+    }
+
 
     sheetHeaders.forEach(
-        header => {
+        (header, index) => {
 
             const filledCount =
                 sheetRows.filter(
@@ -1426,54 +974,28 @@ function renderColumnCards() {
 
 
             const card =
-                document.createElement(
-                    "div"
-                );
-
+                document.createElement("div");
 
             card.className =
                 "column-card";
 
-
             card.innerHTML = `
-
-                <div
-                    class="column-card-icon"
-                >
-
-                    <i
-                        class="fa-solid fa-table-columns"
-                    ></i>
-
+                <div class="column-card-icon">
+                    <i class="fa-solid fa-table-columns"></i>
                 </div>
-
 
                 <h3>
-
-                    ${escapeHTML(
-                header
-            )}
-
+                    ${escapeHTML(header)}
                 </h3>
 
-
-                <div
-                    class="column-card-count"
-                >
-
+                <div class="column-card-count">
                     ${filledCount}
-
                 </div>
 
-
                 <small>
-
-                    Filled records
-
+                    Filled values
                 </small>
-
             `;
-
 
             columnCards.appendChild(
                 card
@@ -1486,429 +1008,59 @@ function renderColumnCards() {
 
 
 /* =====================================================
-   SEARCH
-===================================================== */
-
-searchInput.addEventListener(
-    "input",
-    filterData
-);
-
-
-/* =====================================================
-   COLUMN FILTER
-===================================================== */
-
-columnFilter.addEventListener(
-    "change",
-    filterData
-);
-
-
-/* =====================================================
-   CLEAR
-===================================================== */
-
-clearSearch.addEventListener(
-    "click",
-    () => {
-
-        searchInput.value =
-            "";
-
-        columnFilter.value =
-            "all";
-
-        filterData();
-
-    }
-);
-
-
-/* =====================================================
-   REFRESH
-===================================================== */
-
-refreshButton.addEventListener(
-    "click",
-    async () => {
-
-        refreshButton.disabled =
-            true;
-
-
-        refreshButton.innerHTML = `
-
-            <i
-                class="fa-solid fa-spinner fa-spin"
-            ></i>
-
-            Refresh
-
-        `;
-
-
-        try {
-
-            /*
-               Sabhi tabs dubara load
-            */
-
-            await loadSheetList();
-
-
-            /*
-               Selected sheet
-            */
-
-            let selected =
-                currentSheet;
-
-
-            /*
-               Agar current sheet
-               available nahi hai
-            */
-
-            if (
-                selected
-            ) {
-
-                const found =
-                    allSheets.find(
-                        sheet =>
-                            String(
-                                sheet.gid
-                            ) ===
-                            String(
-                                selected.gid
-                            )
-                    );
-
-
-                if (
-                    found
-                ) {
-
-                    selected =
-                        found;
-
-                }
-
-            }
-
-
-            /*
-               Saved sheet
-            */
-
-            if (
-                !selected
-            ) {
-
-                const savedGid =
-                    localStorage.getItem(
-                        "selectedSheetGid"
-                    );
-
-
-                selected =
-                    allSheets.find(
-                        sheet =>
-                            String(
-                                sheet.gid
-                            ) ===
-                            String(
-                                savedGid
-                            )
-                    );
-
-            }
-
-
-            /*
-               First sheet
-            */
-
-            if (
-                !selected
-            ) {
-
-                selected =
-                    allSheets[0];
-
-            }
-
-
-            if (
-                selected
-            ) {
-
-                await selectSheet(
-                    selected
-                );
-
-            }
-
-        }
-
-        catch (
-        error
-        ) {
-
-            console.error(
-                error
-            );
-
-
-            setStatus(
-                "error",
-                "Refresh Failed"
-            );
-
-        }
-
-
-        refreshButton.disabled =
-            false;
-
-
-        refreshButton.innerHTML = `
-
-            <i
-                class="fa-solid fa-rotate"
-            ></i>
-
-            Refresh
-
-        `;
-
-    }
-);
-
-
-/* =====================================================
    NAVIGATION
 ===================================================== */
 
-document
-    .querySelectorAll(
-        ".nav-item"
-    )
-    .forEach(
-        button => {
+function setupNavigation() {
 
-            button.addEventListener(
-                "click",
-                () => {
+    const navItems =
+        document.querySelectorAll(
+            ".nav-item"
+        );
 
-                    document
-                        .querySelectorAll(
-                            ".nav-item"
+    const views =
+        document.querySelectorAll(
+            ".view"
+        );
+
+    navItems.forEach(item => {
+
+        item.addEventListener(
+            "click",
+            () => {
+
+                const viewName =
+                    item.dataset.view;
+
+
+                navItems.forEach(
+                    nav =>
+                        nav.classList.remove(
+                            "active"
                         )
-                        .forEach(
-                            item =>
-                                item.classList
-                                    .remove(
-                                        "active"
-                                    )
-                        );
+                );
+
+                item.classList.add(
+                    "active"
+                );
 
 
-                    button.classList.add(
-                        "active"
+                views.forEach(view => {
+
+                    view.classList.add(
+                        "hidden"
                     );
 
-
-                    document
-                        .querySelectorAll(
-                            ".view"
-                        )
-                        .forEach(
-                            view =>
-                                view.classList
-                                    .add(
-                                        "hidden"
-                                    )
-                        );
+                });
 
 
-                    const target =
-                        document.getElementById(
-                            button.dataset.view
-                        );
+                const target =
+                    document.getElementById(
+                        viewName
+                    );
 
+                if (target) {
 
-                    if (
-                        target
-                    ) {
-
-                        target.classList
-                            .remove(
-                                "hidden"
-                            );
-
-                    }
-
-
-                    const pageTitle =
-                        document.getElementById(
-                            "pageTitle"
-                        );
-
-
-                    pageTitle.textContent =
-                        button
-                            .querySelector(
-                                "span"
-                            )
-                            ?.textContent
-                            .trim()
-                        ||
-                        button.textContent.trim();
-
-                }
-            );
-
-        }
-    );
-
-
-/* =====================================================
-   MOBILE MENU
-===================================================== */
-
-const mobileMenu =
-    document.getElementById(
-        "mobileMenu"
-    );
-
-
-mobileMenu.addEventListener(
-    "click",
-    () => {
-
-        document
-            .querySelector(
-                ".sidebar"
-            )
-            .classList.toggle(
-                "open"
-            );
-
-    }
-);
-
-
-/* =====================================================
-   START APP
-===================================================== */
-
-async function startApp() {
-
-    try {
-
-        setStatus(
-            "connecting",
-            "Connecting..."
-        );
-
-
-        /*
-           Load all Google Sheet tabs
-        */
-
-        await loadSheetList();
-
-
-        /*
-           Last selected tab
-        */
-
-        const savedGid =
-            localStorage.getItem(
-                "selectedSheetGid"
-            );
-
-
-        let selectedSheet =
-            allSheets.find(
-                sheet =>
-                    String(
-                        sheet.gid
-                    ) ===
-                    String(
-                        savedGid
-                    )
-            );
-
-
-        /*
-           First tab
-        */
-
-        if (
-            !selectedSheet
-        ) {
-
-            selectedSheet =
-                allSheets[0];
-
-        }
-
-
-        if (
-            selectedSheet
-        ) {
-
-            await selectSheet(
-                selectedSheet
-            );
-
-        }
-
-    }
-
-    catch (
-    error
-    ) {
-
-        console.error(
-            error
-        );
-
-
-        setStatus(
-            "error",
-            "Connection Failed"
-        );
-
-
-        sheetTabs.innerHTML = `
-
-            <div
-                class="sheet-loading"
-            >
-
-                <i
-                    class="fa-solid fa-triangle-exclamation"
-                ></i>
-
-                ${escapeHTML(
-            error.message
-        )}
-
-            </div>
-
-        `;
-
-    }
-
-}
-
-
-/* =====================================================
-   START
-===================================================== */
-
-startApp();
+                    target.classList.remove(
+                        "hidden"
+           
