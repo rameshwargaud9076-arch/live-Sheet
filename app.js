@@ -1,29 +1,27 @@
- /* =====================================================
+/* =====================================================
    GOOGLE SHEET DASHBOARD
+   COMPLETE APP.JS
 ===================================================== */
 
 
 /* =====================================================
-   GOOGLE SHEET ID
+   CONFIG
 ===================================================== */
+
+const API_URL =
+    "https://script.google.com/macros/s/AKfycbye8ndlLkeJCLXRygIhVwa6Hpa1crWBVXRdBVZkLY1V6tYv-TzVhgpM0mQPfiG4wRtyiw/exec";
+
 
 const SHEET_ID =
     "1Vrcd5hvHrTUcm8YT6jH6jHn_6cT4Vw1bHfPoPB-x_dQ";
 
 
-/* =====================================================
-   GOOGLE APPS SCRIPT WEB APP
-===================================================== */
-
-const API_URL =
-    "https://script.google.com/macros/s/AKfycby6kV4IzWzpKNzSlwwKm_HyLYmKTV9VvIjHku065owqZFJuCfSF28l5r_e4MH4J4ljuVw/exec";
-
-
-/* =====================================================
-   SETTINGS
-===================================================== */
-
 const ROWS_PER_PAGE = 25;
+
+
+/* =====================================================
+   DASHBOARD HIDDEN COLUMNS
+===================================================== */
 
 const HIDDEN_DASHBOARD_COLUMNS = [
     "sr no",
@@ -34,21 +32,24 @@ const HIDDEN_DASHBOARD_COLUMNS = [
 
 
 /* =====================================================
-   GLOBAL
+   GLOBAL VARIABLES
 ===================================================== */
 
 let allSheets = [];
+
 let currentSheet = null;
 
 let sheetHeaders = [];
+
 let sheetRows = [];
+
 let filteredRows = [];
 
 let currentPage = 1;
 
 
 /* =====================================================
-   DOM
+   DOM ELEMENTS
 ===================================================== */
 
 const statsContainer =
@@ -114,15 +115,6 @@ const connectionDot =
 const connectionText =
     document.getElementById("connectionText");
 
-const pageTitle =
-    document.getElementById("pageTitle");
-
-const sidebar =
-    document.getElementById("sidebar");
-
-const mobileMenu =
-    document.getElementById("mobileMenu");
-
 
 /* =====================================================
    CLEAN VALUE
@@ -141,7 +133,7 @@ function cleanValue(value) {
 
 function escapeHTML(value) {
 
-    return String(value)
+    return String(value ?? "")
 
         .replace(/&/g, "&amp;")
 
@@ -170,7 +162,7 @@ function normalizeHeader(value) {
 
 
 /* =====================================================
-   HIDDEN COLUMN
+   HIDDEN COLUMN CHECK
 ===================================================== */
 
 function isHiddenDashboardColumn(header) {
@@ -196,18 +188,27 @@ function setStatus(type, text) {
         ${escapeHTML(text)}
     `;
 
+
     connectionDot.className =
         "connection-dot";
 
+
     if (type === "live") {
+
         connectionDot.classList.add("live");
+
     }
+
 
     if (type === "error") {
+
         connectionDot.classList.add("error");
+
     }
 
-    connectionText.textContent = text;
+
+    connectionText.textContent =
+        text;
 
 }
 
@@ -223,6 +224,7 @@ async function apiRequest(action, gid = "") {
         "?action=" +
         encodeURIComponent(action);
 
+
     if (gid !== "") {
 
         url +=
@@ -231,15 +233,18 @@ async function apiRequest(action, gid = "") {
 
     }
 
+
     url +=
         "&t=" +
         Date.now();
+
 
     const response =
         await fetch(url, {
             method: "GET",
             cache: "no-store"
         });
+
 
     if (!response.ok) {
 
@@ -250,8 +255,10 @@ async function apiRequest(action, gid = "") {
 
     }
 
+
     const data =
         await response.json();
+
 
     if (data.success === false) {
 
@@ -262,13 +269,14 @@ async function apiRequest(action, gid = "") {
 
     }
 
+
     return data;
 
 }
 
 
 /* =====================================================
-   LOAD SHEETS
+   LOAD ALL SHEETS
 ===================================================== */
 
 async function loadSheetList() {
@@ -278,33 +286,40 @@ async function loadSheetList() {
         "Loading sheets..."
     );
 
+
     const data =
         await apiRequest("sheets");
 
+
     allSheets =
-        data.sheets || [];
+        Array.isArray(data.sheets)
+            ? data.sheets
+            : [];
+
 
     renderSheetTabs();
+
 
     if (allSheets.length === 0) {
 
         throw new Error(
-            "Google Sheet me koi tab nahi mila."
+            "Google Sheet me koi sheet/tab nahi mila."
         );
 
     }
 
 
-    /* =============================================
-       SAVED SHEET
-    ============================================== */
+    /*
+       Previous selected sheet
+    */
 
     const savedGid =
         localStorage.getItem(
             "selectedSheetGid"
         );
 
-    let selected =
+
+    let selectedSheet =
         allSheets.find(
             sheet =>
                 String(sheet.gid) ===
@@ -312,13 +327,21 @@ async function loadSheetList() {
         );
 
 
-    if (!selected) {
-        selected = allSheets[0];
+    /*
+       Agar saved sheet nahi mili
+       to first sheet select hogi.
+    */
+
+    if (!selectedSheet) {
+
+        selectedSheet =
+            allSheets[0];
+
     }
 
 
     await selectSheet(
-        selected
+        selectedSheet
     );
 
 }
@@ -332,13 +355,16 @@ function renderSheetTabs() {
 
     sheetTabs.innerHTML = "";
 
+
     allSheets.forEach(sheet => {
 
         const button =
             document.createElement("button");
 
+
         button.className =
             "sheet-tab";
+
 
         if (
             currentSheet &&
@@ -350,6 +376,7 @@ function renderSheetTabs() {
 
         }
 
+
         button.innerHTML = `
             <span class="sheet-tab-icon">
                 <i class="fa-solid fa-table"></i>
@@ -360,18 +387,14 @@ function renderSheetTabs() {
             </span>
         `;
 
+
         button.addEventListener(
             "click",
-            () => {
-
-                selectSheet(sheet);
-
-            }
+            () => selectSheet(sheet)
         );
 
-        sheetTabs.appendChild(
-            button
-        );
+
+        sheetTabs.appendChild(button);
 
     });
 
@@ -379,7 +402,7 @@ function renderSheetTabs() {
 
 
 /* =====================================================
-   LOAD SHEET
+   LOAD SELECTED SHEET DATA
 ===================================================== */
 
 async function loadSheet(sheet) {
@@ -389,33 +412,41 @@ async function loadSheet(sheet) {
         "Loading " + sheet.name
     );
 
+
     const data =
         await apiRequest(
             "data",
             sheet.gid
         );
 
+
     sheetHeaders =
         Array.isArray(data.headers)
             ? data.headers
             : [];
+
 
     sheetRows =
         Array.isArray(data.rows)
             ? data.rows
             : [];
 
+
     filteredRows =
         [...sheetRows];
 
+
     currentPage = 1;
 
+
     renderCurrentSheet();
+
 
     setStatus(
         "live",
         "Google Sheet Live"
     );
+
 
     lastUpdated.textContent =
         "Updated: " +
@@ -430,17 +461,22 @@ async function loadSheet(sheet) {
 
 async function selectSheet(sheet) {
 
-    currentSheet = sheet;
+    currentSheet =
+        sheet;
+
 
     currentSheetName.textContent =
         sheet.name;
 
+
     renderSheetTabs();
+
 
     localStorage.setItem(
         "selectedSheetGid",
         String(sheet.gid)
     );
+
 
     tableBody.innerHTML = `
         <tr>
@@ -451,18 +487,23 @@ async function selectSheet(sheet) {
         </tr>
     `;
 
+
     try {
 
         await loadSheet(sheet);
 
-    } catch (error) {
+    }
+
+    catch (error) {
 
         console.error(error);
+
 
         setStatus(
             "error",
             "Load Failed"
         );
+
 
         tableBody.innerHTML = `
             <tr>
@@ -486,13 +527,21 @@ function renderCurrentSheet() {
     totalRecordsElement.textContent =
         sheetRows.length;
 
+
     currentSheetRows.textContent =
         sheetRows.length +
         " Records";
 
-    createTableHeader(tableHead);
 
-    createTableHeader(allTableHead);
+    createTableHeader(
+        tableHead
+    );
+
+
+    createTableHeader(
+        allTableHead
+    );
+
 
     renderColumnFilter();
 
@@ -508,7 +557,7 @@ function renderCurrentSheet() {
 
 
 /* =====================================================
-   TABLE HEADER
+   CREATE TABLE HEADER
 ===================================================== */
 
 function createTableHeader(target) {
@@ -517,16 +566,13 @@ function createTableHeader(target) {
         <tr>
             <th>#</th>
 
-            ${sheetHeaders
-                .map(
-                    header => `
-                        <th>
-                            ${escapeHTML(header)}
-                        </th>
-                    `
-                )
-                .join("")
-            }
+            ${sheetHeaders.map(
+                header => `
+                    <th>
+                        ${escapeHTML(header)}
+                    </th>
+                `
+            ).join("")}
         </tr>
     `;
 
@@ -534,7 +580,7 @@ function createTableHeader(target) {
 
 
 /* =====================================================
-   TABLE ROW
+   CREATE TABLE ROW
 ===================================================== */
 
 function createTableRow(row, number) {
@@ -546,10 +592,12 @@ function createTableRow(row, number) {
             </td>
     `;
 
+
     sheetHeaders.forEach(header => {
 
         const value =
             cleanValue(row[header]);
+
 
         html += `
             <td class="${value ? "" : "empty-cell"}">
@@ -563,9 +611,11 @@ function createTableRow(row, number) {
 
     });
 
+
     html += `
         </tr>
     `;
+
 
     return html;
 
@@ -579,29 +629,38 @@ function createTableRow(row, number) {
 function filterData() {
 
     const search =
-        cleanValue(searchInput.value)
-            .toLowerCase();
+        cleanValue(
+            searchInput.value
+        ).toLowerCase();
+
 
     const selectedColumn =
         columnFilter.value;
+
 
     filteredRows =
         sheetRows.filter(row => {
 
             if (search === "") {
+
                 return true;
+
             }
+
 
             if (selectedColumn === "all") {
 
                 return sheetHeaders.some(
                     header =>
-                        cleanValue(row[header])
+                        cleanValue(
+                            row[header]
+                        )
                             .toLowerCase()
                             .includes(search)
                 );
 
             }
+
 
             return cleanValue(
                 row[selectedColumn]
@@ -611,7 +670,9 @@ function filterData() {
 
         });
 
+
     currentPage = 1;
+
 
     renderMainTable();
 
@@ -619,13 +680,14 @@ function filterData() {
 
 
 /* =====================================================
-   MAIN TABLE
+   RENDER MAIN TABLE
 ===================================================== */
 
 function renderMainTable() {
 
     const total =
         filteredRows.length;
+
 
     const totalPages =
         Math.max(
@@ -636,19 +698,26 @@ function renderMainTable() {
             )
         );
 
+
     if (currentPage > totalPages) {
-        currentPage = totalPages;
+
+        currentPage =
+            totalPages;
+
     }
+
 
     const start =
         (currentPage - 1) *
         ROWS_PER_PAGE;
+
 
     const pageRows =
         filteredRows.slice(
             start,
             start + ROWS_PER_PAGE
         );
+
 
     if (pageRows.length === 0) {
 
@@ -660,7 +729,9 @@ function renderMainTable() {
             </tr>
         `;
 
-    } else {
+    }
+
+    else {
 
         tableBody.innerHTML =
             pageRows
@@ -675,16 +746,20 @@ function renderMainTable() {
 
     }
 
+
     recordCount.textContent =
         total + " Records";
 
-    renderPagination(totalPages);
+
+    renderPagination(
+        totalPages
+    );
 
 }
 
 
 /* =====================================================
-   ALL RECORDS
+   RENDER ALL RECORDS
 ===================================================== */
 
 function renderAllRecords() {
@@ -693,9 +768,11 @@ function renderAllRecords() {
 
     allTableBody.innerHTML = "";
 
+
     createTableHeader(
         allTableHead
     );
+
 
     if (sheetRows.length === 0) {
 
@@ -707,7 +784,9 @@ function renderAllRecords() {
             </tr>
         `;
 
-    } else {
+    }
+
+    else {
 
         allTableBody.innerHTML =
             sheetRows
@@ -721,6 +800,7 @@ function renderAllRecords() {
                 .join("");
 
     }
+
 
     allRecordCount.textContent =
         sheetRows.length +
@@ -737,23 +817,28 @@ function renderPagination(totalPages) {
 
     pagination.innerHTML = "";
 
+
     if (totalPages <= 1) {
+
         return;
+
     }
 
-
-    /* PREVIOUS */
 
     const previous =
         document.createElement("button");
 
+
     previous.className =
         "page-button";
 
+
     previous.innerHTML = "‹";
+
 
     previous.disabled =
         currentPage === 1;
+
 
     previous.onclick = () => {
 
@@ -767,22 +852,64 @@ function renderPagination(totalPages) {
 
     };
 
-    pagination.appendChild(previous);
+
+    pagination.appendChild(
+        previous
+    );
 
 
-    /* PAGES */
+    /*
+       Page buttons
+    */
+
+    const maxButtons = 7;
+
+    let startPage =
+        Math.max(
+            1,
+            currentPage -
+            Math.floor(maxButtons / 2)
+        );
+
+
+    let endPage =
+        Math.min(
+            totalPages,
+            startPage +
+            maxButtons -
+            1
+        );
+
+
+    if (
+        endPage - startPage + 1 <
+        maxButtons
+    ) {
+
+        startPage =
+            Math.max(
+                1,
+                endPage -
+                maxButtons +
+                1
+            );
+
+    }
+
 
     for (
-        let i = 1;
-        i <= totalPages;
+        let i = startPage;
+        i <= endPage;
         i++
     ) {
 
         const button =
             document.createElement("button");
 
+
         button.className =
             "page-button";
+
 
         if (i === currentPage) {
 
@@ -792,7 +919,10 @@ function renderPagination(totalPages) {
 
         }
 
-        button.textContent = i;
+
+        button.textContent =
+            i;
+
 
         button.onclick = () => {
 
@@ -802,23 +932,28 @@ function renderPagination(totalPages) {
 
         };
 
-        pagination.appendChild(button);
+
+        pagination.appendChild(
+            button
+        );
 
     }
 
 
-    /* NEXT */
-
     const next =
         document.createElement("button");
+
 
     next.className =
         "page-button";
 
+
     next.innerHTML = "›";
+
 
     next.disabled =
         currentPage === totalPages;
+
 
     next.onclick = () => {
 
@@ -835,7 +970,10 @@ function renderPagination(totalPages) {
 
     };
 
-    pagination.appendChild(next);
+
+    pagination.appendChild(
+        next
+    );
 
 }
 
@@ -852,14 +990,20 @@ function renderColumnFilter() {
         </option>
     `;
 
+
     sheetHeaders.forEach(header => {
 
         const option =
             document.createElement("option");
 
-        option.value = header;
 
-        option.textContent = header;
+        option.value =
+            header;
+
+
+        option.textContent =
+            header;
+
 
         columnFilter.appendChild(
             option
@@ -876,16 +1020,24 @@ function renderColumnFilter() {
 
 function renderStats() {
 
+    /*
+       Existing total card ko rakho.
+       Dynamic cards ko remove karo.
+    */
+
     const cards =
         statsContainer.querySelectorAll(
             ".stat-card"
         );
 
+
     cards.forEach(
         (card, index) => {
 
             if (index > 0) {
+
                 card.remove();
+
             }
 
         }
@@ -899,7 +1051,9 @@ function renderStats() {
                 header
             )
         ) {
+
             return;
+
         }
 
 
@@ -913,10 +1067,14 @@ function renderStats() {
 
 
         const card =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
+
 
         card.className =
             "stat-card";
+
 
         card.innerHTML = `
             <div class="stat-label">
@@ -931,6 +1089,7 @@ function renderStats() {
                 Filled records
             </div>
         `;
+
 
         statsContainer.appendChild(
             card
@@ -949,6 +1108,7 @@ function renderColumnCards() {
 
     columnCards.innerHTML = "";
 
+
     if (sheetHeaders.length === 0) {
 
         columnCards.innerHTML = `
@@ -958,6 +1118,7 @@ function renderColumnCards() {
         `;
 
         return;
+
     }
 
 
@@ -974,10 +1135,14 @@ function renderColumnCards() {
 
 
             const card =
-                document.createElement("div");
+                document.createElement(
+                    "div"
+                );
+
 
             card.className =
                 "column-card";
+
 
             card.innerHTML = `
                 <div class="column-card-icon">
@@ -993,9 +1158,10 @@ function renderColumnCards() {
                 </div>
 
                 <small>
-                    Filled values
+                    ${sheetRows.length} total records
                 </small>
             `;
+
 
             columnCards.appendChild(
                 card
@@ -1018,49 +1184,17 @@ function setupNavigation() {
             ".nav-item"
         );
 
+
     const views =
         document.querySelectorAll(
             ".view"
         );
 
-    navItems.forEach(item => {
 
-        item.addEventListener(
-            "click",
-            () => {
-
-                const viewName =
-                    item.dataset.view;
+    const pageTitle =
+        document.getElementById(
+            "pageTitle"
+        );
 
 
-                navItems.forEach(
-                    nav =>
-                        nav.classList.remove(
-                            "active"
-                        )
-                );
-
-                item.classList.add(
-                    "active"
-                );
-
-
-                views.forEach(view => {
-
-                    view.classList.add(
-                        "hidden"
-                    );
-
-                });
-
-
-                const target =
-                    document.getElementById(
-                        viewName
-                    );
-
-                if (target) {
-
-                    target.classList.remove(
-                        "hidden"
-           
+ 
