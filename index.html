@@ -2,540 +2,358 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>
-        Google Sheet Dashboard
-    </title>
-
-
-    <!-- CSS -->
+    <title>Google Sheet Dashboard</title>
 
     <link rel="stylesheet" href="style.css">
 
-
-    <!-- Font Awesome -->
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    >
 </head>
-
 
 <body>
 
+<div class="app">
 
-    <!-- =====================================================
-     APP
-===================================================== -->
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
 
-    <div class="app">
+        <div class="logo-area">
+
+            <div class="logo-icon">
+                <i class="fa-solid fa-table"></i>
+            </div>
+
+            <div>
+                <h2>Data Panel</h2>
+                <span>Google Sheets</span>
+            </div>
+
+        </div>
+
+        <div class="nav-title">MENU</div>
+
+        <nav class="navigation">
+
+            <button class="nav-item active" data-view="dashboard">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Dashboard</span>
+            </button>
+
+            <button class="nav-item" data-view="records">
+                <i class="fa-solid fa-table-list"></i>
+                <span>All Records</span>
+            </button>
+
+            <button class="nav-item" data-view="columns">
+                <i class="fa-solid fa-layer-group"></i>
+                <span>Columns</span>
+            </button>
+
+        </nav>
+
+        <div class="sheet-tabs-title">
+            GOOGLE SHEETS
+        </div>
+
+        <div id="sheetTabs" class="sheet-tabs">
+
+            <div class="sheet-loading">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Loading sheets...
+            </div>
+
+        </div>
+
+        <div class="sidebar-bottom">
+
+            <div class="connection-small">
+
+                <span id="connectionDot" class="connection-dot"></span>
+
+                <span id="connectionText">
+                    Connecting...
+                </span>
+
+            </div>
+
+        </div>
+
+    </aside>
 
 
-        <!-- =================================================
-         SIDEBAR
-    ================================================== -->
+    <!-- MAIN -->
+    <main class="main">
 
-        <aside class="sidebar">
+        <!-- TOPBAR -->
+        <header class="topbar">
 
+            <div class="topbar-left">
 
-            <!-- LOGO -->
-
-            <div class="logo-area">
-
-                <div class="logo-icon">
-
-                    <i class="fa-solid fa-table"></i>
-
-                </div>
-
+                <button id="mobileMenu" class="mobile-menu">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
 
                 <div>
 
-                    <h2>
-                        Data Panel
-                    </h2>
-
-                    <span>
-                        Google Sheets
-                    </span>
-
-                </div>
-
-            </div>
-
-
-
-            <!-- NAVIGATION -->
-
-            <div class="nav-title">
-
-                MENU
-
-            </div>
-
-
-            <nav class="navigation">
-
-
-                <button class="nav-item active" data-view="dashboard">
-
-                    <i class="fa-solid fa-chart-pie"></i>
-
-                    <span>
+                    <h1 id="pageTitle">
                         Dashboard
-                    </span>
+                    </h1>
 
-                </button>
-
-
-                <button class="nav-item" data-view="records">
-
-                    <i class="fa-solid fa-table-list"></i>
-
-                    <span>
-                        All Records
-                    </span>
-
-                </button>
-
-
-                <button class="nav-item" data-view="columns">
-
-                    <i class="fa-solid fa-layer-group"></i>
-
-                    <span>
-                        Columns
-                    </span>
-
-                </button>
-
-            </nav>
-
-
-
-            <!-- SHEETS -->
-
-            <div class="sheet-tabs-title">
-
-                GOOGLE SHEETS
-
-            </div>
-
-
-            <div id="sheetTabs" class="sheet-tabs">
-
-                <div class="sheet-loading">
-
-                    <i class="fa-solid fa-spinner fa-spin"></i>
-
-                    Loading sheets...
+                    <p>
+                        Google Sheet live data
+                    </p>
 
                 </div>
 
             </div>
 
 
+            <div class="topbar-right">
 
-            <!-- SIDEBAR BOTTOM -->
+                <div id="connectionStatus" class="status connecting">
 
-            <div class="sidebar-bottom">
-
-                <div class="connection-small">
-
-                    <span id="connectionDot" class="connection-dot"></span>
-
-                    <span id="connectionText">
-                        Connecting...
-                    </span>
+                    <span></span>
+                    Connecting...
 
                 </div>
 
+                <button id="refreshButton" class="refresh-btn">
+
+                    <i class="fa-solid fa-rotate"></i>
+                    <span>Refresh</span>
+
+                </button>
+
             </div>
 
-
-        </aside>
-
+        </header>
 
 
-        <!-- =================================================
-         MAIN
-    ================================================== -->
+        <!-- CONTENT -->
+        <div class="content">
 
-        <main class="main">
+            <!-- DASHBOARD -->
+            <section id="dashboard" class="view">
 
-
-            <!-- HEADER -->
-
-            <header class="topbar">
-
-
-                <div class="topbar-left">
-
-                    <button id="mobileMenu" class="mobile-menu">
-
-                        <i class="fa-solid fa-bars"></i>
-
-                    </button>
-
+                <div class="current-sheet-box">
 
                     <div>
 
-                        <h1 id="pageTitle">
-                            Dashboard
-                        </h1>
+                        <span class="current-sheet-label">
+                            CURRENT SHEET
+                        </span>
 
-                        <p>
-                            Google Sheet live data
-                        </p>
+                        <h2 id="currentSheetName">
+                            Loading...
+                        </h2>
+
+                    </div>
+
+                    <div id="currentSheetRows" class="record-count">
+                        0 Records
+                    </div>
+
+                </div>
+
+
+                <div id="statsContainer" class="stats-grid">
+
+                    <div class="stat-card">
+
+                        <div class="stat-label">
+                            Total Records
+                        </div>
+
+                        <div id="totalRecords" class="stat-number">
+                            0
+                        </div>
+
+                        <div class="stat-description">
+                            Total data rows
+                        </div>
 
                     </div>
 
                 </div>
 
 
+                <!-- SEARCH -->
+                <div class="search-box">
 
-                <div class="topbar-right">
+                    <div class="search-input-wrap">
 
+                        <i class="fa-solid fa-magnifying-glass"></i>
 
-                    <div id="connectionStatus" class="status connecting">
-
-                        <span></span>
-
-                        Connecting...
+                        <input
+                            id="searchInput"
+                            type="text"
+                            placeholder="Search records..."
+                        >
 
                     </div>
 
+                    <select id="columnFilter">
 
-                    <button id="refreshButton" class="refresh-btn">
+                        <option value="all">
+                            All Columns
+                        </option>
 
-                        <i class="fa-solid fa-rotate"></i>
+                    </select>
 
-                        Refresh
-
+                    <button id="clearSearch" class="clear-btn">
+                        Clear
                     </button>
 
                 </div>
 
 
-            </header>
+                <!-- TABLE -->
+                <div class="table-card">
 
-
-
-            <!-- =================================================
-             CONTENT
-        ================================================== -->
-
-            <div class="content">
-
-
-                <!-- =================================================
-                 DASHBOARD
-            ================================================== -->
-
-                <section id="dashboard" class="view">
-
-
-                    <!-- CURRENT SHEET -->
-
-                    <div class="current-sheet-box">
-
+                    <div class="table-header">
 
                         <div>
 
-                            <span class="current-sheet-label">
+                            <h3>
+                                Current Sheet Data
+                            </h3>
 
-                                CURRENT SHEET
-
-                            </span>
-
-
-                            <h2 id="currentSheetName">
-                                Loading...
-                            </h2>
+                            <p>
+                                Live records from Google Sheets
+                            </p>
 
                         </div>
 
-
-                        <div id="currentSheetRows" class="record-count">
+                        <div id="recordCount" class="table-count">
                             0 Records
                         </div>
 
                     </div>
 
+                    <div class="table-wrapper">
 
+                        <table>
 
-                    <!-- STATS -->
+                            <thead id="tableHead"></thead>
 
-                    <div id="statsContainer" class="stats-grid">
+                            <tbody id="tableBody">
 
+                                <tr>
 
-                        <!-- TOTAL -->
+                                    <td colspan="100" class="loading-row">
+                                        Loading...
+                                    </td>
 
-                        <div class="stat-card">
+                                </tr>
 
+                            </tbody>
 
-                            <div class="stat-label">
-
-                                Total Records
-
-                            </div>
-
-
-                            <div id="totalRecords" class="stat-number">
-
-                                0
-
-                            </div>
-
-
-                            <div class="stat-description">
-
-                                Total data rows
-
-                            </div>
-
-                        </div>
-
+                        </table>
 
                     </div>
 
+                    <div id="pagination" class="pagination"></div>
+
+                </div>
+
+            </section>
 
 
-                    <!-- SEARCH -->
+            <!-- ALL RECORDS -->
+            <section id="records" class="view hidden">
 
-                    <div class="search-box">
+                <div class="page-card">
 
+                    <div class="page-card-header">
 
-                        <div class="search-input-wrap">
+                        <div>
 
-                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <h2>
+                                All Records
+                            </h2>
 
-
-                            <input id="searchInput" type="text" placeholder="Search records...">
+                            <p>
+                                Complete data of current sheet
+                            </p>
 
                         </div>
 
-
-                        <select id="columnFilter">
-
-                            <option value="all">
-                                All Columns
-                            </option>
-
-                        </select>
-
-
-                        <button id="clearSearch" class="clear-btn">
-
-                            Clear
-
-                        </button>
-
+                        <div id="allRecordCount" class="table-count">
+                            0 Records
+                        </div>
 
                     </div>
 
+                    <div class="table-wrapper">
 
+                        <table>
 
-                    <!-- TABLE CARD -->
+                            <thead id="allTableHead"></thead>
 
-                    <div class="table-card">
+                            <tbody id="allTableBody"></tbody>
 
-
-                        <div class="table-header">
-
-
-                            <div>
-
-                                <h3>
-                                    Current Sheet Data
-                                </h3>
-
-                                <p>
-                                    Live records from Google Sheets
-                                </p>
-
-                            </div>
-
-
-                            <div id="recordCount" class="table-count">
-                                0 Records
-                            </div>
-
-                        </div>
-
-
-
-                        <div class="table-wrapper">
-
-
-                            <table>
-
-                                <thead id="tableHead">
-
-                                </thead>
-
-
-                                <tbody id="tableBody">
-
-                                    <tr>
-
-                                        <td colspan="100" class="loading-row">
-
-                                            Loading...
-
-                                        </td>
-
-                                    </tr>
-
-                                </tbody>
-
-                            </table>
-
-
-                        </div>
-
-
-
-                        <!-- PAGINATION -->
-
-                        <div id="pagination" class="pagination"></div>
-
+                        </table>
 
                     </div>
 
+                </div>
 
-                </section>
-
-
-
-                <!-- =================================================
-                 ALL RECORDS
-            ================================================== -->
-
-                <section id="records" class="view hidden">
+            </section>
 
 
-                    <div class="page-card">
+            <!-- COLUMNS -->
+            <section id="columns" class="view hidden">
 
+                <div class="page-card">
 
-                        <div class="page-card-header">
+                    <div class="page-card-header">
 
+                        <div>
 
-                            <div>
+                            <h2>
+                                Sheet Columns
+                            </h2>
 
-                                <h2>
-                                    All Records
-                                </h2>
-
-                                <p>
-                                    Complete data of current sheet
-                                </p>
-
-                            </div>
-
-
-                            <div id="allRecordCount" class="table-count">
-                                0 Records
-                            </div>
+                            <p>
+                                Dynamic columns of current sheet
+                            </p>
 
                         </div>
-
-
-
-                        <div class="table-wrapper">
-
-
-                            <table>
-
-                                <thead id="allTableHead"></thead>
-
-
-                                <tbody id="allTableBody"></tbody>
-
-                            </table>
-
-
-                        </div>
-
 
                     </div>
 
+                    <div id="columnCards" class="column-grid"></div>
 
-                </section>
+                </div>
 
+            </section>
 
-
-                <!-- =================================================
-                 COLUMNS
-            ================================================== -->
-
-                <section id="columns" class="view hidden">
+        </div>
 
 
-                    <div class="page-card">
+        <!-- FOOTER -->
+        <footer class="footer">
 
+            <span>
+                Google Sheet Dashboard
+            </span>
 
-                        <div class="page-card-header">
+            <span id="lastUpdated">
+                Not updated yet
+            </span>
 
+        </footer>
 
-                            <div>
+    </main>
 
-                                <h2>
-                                    Sheet Columns
-                                </h2>
+</div>
 
-                                <p>
-                                    Dynamic columns of current sheet
-                                </p>
-
-                            </div>
-
-                        </div>
-
-
-                        <div id="columnCards" class="column-grid"></div>
-
-
-                    </div>
-
-
-                </section>
-
-
-            </div>
-
-
-
-            <!-- FOOTER -->
-
-            <footer class="footer">
-
-                <span>
-                    Google Sheet Dashboard
-                </span>
-
-
-                <span id="lastUpdated">
-                    Not updated yet
-                </span>
-
-            </footer>
-
-
-        </main>
-
-    </div>
-
-
-
-    <!-- JS -->
-
-    <script src="app.js"></script>
-
+<script src="app.js"></script>
 
 </body>
-
 </html>
