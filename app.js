@@ -1,1200 +1,354 @@
 /* =====================================================
-   GOOGLE SHEET DASHBOARD
-   COMPLETE APP.JS
+   GOOGLE SHEET DASHBOARD API
+   COMPLETE CODE.GS
 ===================================================== */
+
+const SPREADSHEET_ID =
+  "1Vrcd5hvHrTUcm8YT6jH6jHn_6cT4Vw1bHfPoPB-x_dQ";
 
 
 /* =====================================================
-   CONFIG
+   GET REQUEST
 ===================================================== */
 
-const API_URL =
-    "https://script.google.com/macros/s/AKfycbye8ndlLkeJCLXRygIhVwa6Hpa1crWBVXRdBVZkLY1V6tYv-TzVhgpM0mQPfiG4wRtyiw/exec";
+function doGet(e) {
 
+  try {
 
-const SHEET_ID =
-    "1Vrcd5hvHrTUcm8YT6jH6jHn_6cT4Vw1bHfPoPB-x_dQ";
+    const action =
+      e && e.parameter && e.parameter.action
+        ? e.parameter.action
+        : "sheets";
 
 
-const ROWS_PER_PAGE = 25;
+    /* =========================
+       GET ALL SHEETS
+    ========================= */
 
+    if (action === "sheets") {
 
-/* =====================================================
-   DASHBOARD HIDDEN COLUMNS
-===================================================== */
-
-const HIDDEN_DASHBOARD_COLUMNS = [
-    "sr no",
-    "srno",
-    "serial no",
-    "serial number"
-];
-
-
-/* =====================================================
-   GLOBAL VARIABLES
-===================================================== */
-
-let allSheets = [];
-
-let currentSheet = null;
-
-let sheetHeaders = [];
-
-let sheetRows = [];
-
-let filteredRows = [];
-
-let currentPage = 1;
-
-
-/* =====================================================
-   DOM ELEMENTS
-===================================================== */
-
-const statsContainer =
-    document.getElementById("statsContainer");
-
-const totalRecordsElement =
-    document.getElementById("totalRecords");
-
-const tableHead =
-    document.getElementById("tableHead");
-
-const tableBody =
-    document.getElementById("tableBody");
-
-const allTableHead =
-    document.getElementById("allTableHead");
-
-const allTableBody =
-    document.getElementById("allTableBody");
-
-const pagination =
-    document.getElementById("pagination");
-
-const searchInput =
-    document.getElementById("searchInput");
-
-const columnFilter =
-    document.getElementById("columnFilter");
-
-const clearSearch =
-    document.getElementById("clearSearch");
-
-const refreshButton =
-    document.getElementById("refreshButton");
-
-const connectionStatus =
-    document.getElementById("connectionStatus");
-
-const lastUpdated =
-    document.getElementById("lastUpdated");
-
-const recordCount =
-    document.getElementById("recordCount");
-
-const allRecordCount =
-    document.getElementById("allRecordCount");
-
-const columnCards =
-    document.getElementById("columnCards");
-
-const sheetTabs =
-    document.getElementById("sheetTabs");
-
-const currentSheetName =
-    document.getElementById("currentSheetName");
-
-const currentSheetRows =
-    document.getElementById("currentSheetRows");
-
-const connectionDot =
-    document.getElementById("connectionDot");
-
-const connectionText =
-    document.getElementById("connectionText");
-
-
-/* =====================================================
-   CLEAN VALUE
-===================================================== */
-
-function cleanValue(value) {
-
-    return String(value ?? "").trim();
-
-}
-
-
-/* =====================================================
-   ESCAPE HTML
-===================================================== */
-
-function escapeHTML(value) {
-
-    return String(value ?? "")
-
-        .replace(/&/g, "&amp;")
-
-        .replace(/</g, "&lt;")
-
-        .replace(/>/g, "&gt;")
-
-        .replace(/"/g, "&quot;")
-
-        .replace(/'/g, "&#039;");
-
-}
-
-
-/* =====================================================
-   NORMALIZE HEADER
-===================================================== */
-
-function normalizeHeader(value) {
-
-    return cleanValue(value)
-        .toLowerCase()
-        .replace(/\s+/g, " ");
-
-}
-
-
-/* =====================================================
-   HIDDEN COLUMN CHECK
-===================================================== */
-
-function isHiddenDashboardColumn(header) {
-
-    return HIDDEN_DASHBOARD_COLUMNS.includes(
-        normalizeHeader(header)
-    );
-
-}
-
-
-/* =====================================================
-   STATUS
-===================================================== */
-
-function setStatus(type, text) {
-
-    connectionStatus.className =
-        "status " + type;
-
-    connectionStatus.innerHTML = `
-        <span></span>
-        ${escapeHTML(text)}
-    `;
-
-
-    connectionDot.className =
-        "connection-dot";
-
-
-    if (type === "live") {
-
-        connectionDot.classList.add("live");
+      return jsonResponse(
+        getSheets()
+      );
 
     }
 
 
-    if (type === "error") {
+    /* =========================
+       GET SHEET DATA
+    ========================= */
 
-        connectionDot.classList.add("error");
+    if (action === "data") {
 
-    }
-
-
-    connectionText.textContent =
-        text;
-
-}
+      const gid =
+        e.parameter.gid;
 
 
-/* =====================================================
-   API REQUEST
-===================================================== */
-
-async function apiRequest(action, gid = "") {
-
-    let url =
-        API_URL +
-        "?action=" +
-        encodeURIComponent(action);
-
-
-    if (gid !== "") {
-
-        url +=
-            "&gid=" +
-            encodeURIComponent(gid);
-
-    }
-
-
-    url +=
-        "&t=" +
-        Date.now();
-
-
-    const response =
-        await fetch(url, {
-            method: "GET",
-            cache: "no-store"
-        });
-
-
-    if (!response.ok) {
+      if (!gid) {
 
         throw new Error(
-            "Server response error: " +
-            response.status
+          "gid missing"
         );
+
+      }
+
+
+      return jsonResponse(
+        getSheetData(gid)
+      );
 
     }
 
 
-    const data =
-        await response.json();
-
-
-    if (data.success === false) {
-
-        throw new Error(
-            data.error ||
-            "Google Sheet error"
-        );
-
-    }
-
-
-    return data;
-
-}
-
-
-/* =====================================================
-   LOAD ALL SHEETS
-===================================================== */
-
-async function loadSheetList() {
-
-    setStatus(
-        "connecting",
-        "Loading sheets..."
+    throw new Error(
+      "Invalid action"
     );
 
+  }
 
-    const data =
-        await apiRequest("sheets");
+  catch (error) {
 
+    return jsonResponse({
 
-    allSheets =
-        Array.isArray(data.sheets)
-            ? data.sheets
-            : [];
+      success: false,
 
-
-    renderSheetTabs();
-
-
-    if (allSheets.length === 0) {
-
-        throw new Error(
-            "Google Sheet me koi sheet/tab nahi mila."
-        );
-
-    }
-
-
-    /*
-       Previous selected sheet
-    */
-
-    const savedGid =
-        localStorage.getItem(
-            "selectedSheetGid"
-        );
-
-
-    let selectedSheet =
-        allSheets.find(
-            sheet =>
-                String(sheet.gid) ===
-                String(savedGid)
-        );
-
-
-    /*
-       Agar saved sheet nahi mili
-       to first sheet select hogi.
-    */
-
-    if (!selectedSheet) {
-
-        selectedSheet =
-            allSheets[0];
-
-    }
-
-
-    await selectSheet(
-        selectedSheet
-    );
-
-}
-
-
-/* =====================================================
-   RENDER SHEET TABS
-===================================================== */
-
-function renderSheetTabs() {
-
-    sheetTabs.innerHTML = "";
-
-
-    allSheets.forEach(sheet => {
-
-        const button =
-            document.createElement("button");
-
-
-        button.className =
-            "sheet-tab";
-
-
-        if (
-            currentSheet &&
-            String(currentSheet.gid) ===
-            String(sheet.gid)
-        ) {
-
-            button.classList.add("active");
-
-        }
-
-
-        button.innerHTML = `
-            <span class="sheet-tab-icon">
-                <i class="fa-solid fa-table"></i>
-            </span>
-
-            <span>
-                ${escapeHTML(sheet.name)}
-            </span>
-        `;
-
-
-        button.addEventListener(
-            "click",
-            () => selectSheet(sheet)
-        );
-
-
-        sheetTabs.appendChild(button);
+      error:
+        error && error.message
+          ? error.message
+          : String(error)
 
     });
 
-}
-
-
-/* =====================================================
-   LOAD SELECTED SHEET DATA
-===================================================== */
-
-async function loadSheet(sheet) {
-
-    setStatus(
-        "connecting",
-        "Loading " + sheet.name
-    );
-
-
-    const data =
-        await apiRequest(
-            "data",
-            sheet.gid
-        );
-
-
-    sheetHeaders =
-        Array.isArray(data.headers)
-            ? data.headers
-            : [];
-
-
-    sheetRows =
-        Array.isArray(data.rows)
-            ? data.rows
-            : [];
-
-
-    filteredRows =
-        [...sheetRows];
-
-
-    currentPage = 1;
-
-
-    renderCurrentSheet();
-
-
-    setStatus(
-        "live",
-        "Google Sheet Live"
-    );
-
-
-    lastUpdated.textContent =
-        "Updated: " +
-        new Date().toLocaleString("en-IN");
+  }
 
 }
 
 
 /* =====================================================
-   SELECT SHEET
+   GET ALL SHEETS
 ===================================================== */
 
-async function selectSheet(sheet) {
+function getSheets() {
 
-    currentSheet =
-        sheet;
-
-
-    currentSheetName.textContent =
-        sheet.name;
-
-
-    renderSheetTabs();
-
-
-    localStorage.setItem(
-        "selectedSheetGid",
-        String(sheet.gid)
+  const spreadsheet =
+    SpreadsheetApp.openById(
+      SPREADSHEET_ID
     );
 
 
-    tableBody.innerHTML = `
-        <tr>
-            <td colspan="100" class="loading-row">
-                <i class="fa-solid fa-spinner fa-spin"></i>
-                Loading ${escapeHTML(sheet.name)}...
-            </td>
-        </tr>
-    `;
+  const sheets =
+    spreadsheet.getSheets();
 
 
-    try {
+  const result =
+    sheets.map(function(sheet) {
 
-        await loadSheet(sheet);
+      return {
 
-    }
+        gid:
+          String(
+            sheet.getSheetId()
+          ),
 
-    catch (error) {
+        name:
+          sheet.getName()
 
-        console.error(error);
-
-
-        setStatus(
-            "error",
-            "Load Failed"
-        );
-
-
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="100" class="error-row">
-                    ${escapeHTML(error.message)}
-                </td>
-            </tr>
-        `;
-
-    }
-
-}
-
-
-/* =====================================================
-   RENDER CURRENT SHEET
-===================================================== */
-
-function renderCurrentSheet() {
-
-    totalRecordsElement.textContent =
-        sheetRows.length;
-
-
-    currentSheetRows.textContent =
-        sheetRows.length +
-        " Records";
-
-
-    createTableHeader(
-        tableHead
-    );
-
-
-    createTableHeader(
-        allTableHead
-    );
-
-
-    renderColumnFilter();
-
-    renderStats();
-
-    renderColumnCards();
-
-    renderMainTable();
-
-    renderAllRecords();
-
-}
-
-
-/* =====================================================
-   CREATE TABLE HEADER
-===================================================== */
-
-function createTableHeader(target) {
-
-    target.innerHTML = `
-        <tr>
-            <th>#</th>
-
-            ${sheetHeaders.map(
-                header => `
-                    <th>
-                        ${escapeHTML(header)}
-                    </th>
-                `
-            ).join("")}
-        </tr>
-    `;
-
-}
-
-
-/* =====================================================
-   CREATE TABLE ROW
-===================================================== */
-
-function createTableRow(row, number) {
-
-    let html = `
-        <tr>
-            <td class="serial-value">
-                ${number}
-            </td>
-    `;
-
-
-    sheetHeaders.forEach(header => {
-
-        const value =
-            cleanValue(row[header]);
-
-
-        html += `
-            <td class="${value ? "" : "empty-cell"}">
-                ${
-                    value
-                        ? escapeHTML(value)
-                        : "—"
-                }
-            </td>
-        `;
+      };
 
     });
 
 
-    html += `
-        </tr>
-    `;
+  return {
 
+    success: true,
 
-    return html;
+    sheets: result
 
-}
-
-
-/* =====================================================
-   FILTER DATA
-===================================================== */
-
-function filterData() {
-
-    const search =
-        cleanValue(
-            searchInput.value
-        ).toLowerCase();
-
-
-    const selectedColumn =
-        columnFilter.value;
-
-
-    filteredRows =
-        sheetRows.filter(row => {
-
-            if (search === "") {
-
-                return true;
-
-            }
-
-
-            if (selectedColumn === "all") {
-
-                return sheetHeaders.some(
-                    header =>
-                        cleanValue(
-                            row[header]
-                        )
-                            .toLowerCase()
-                            .includes(search)
-                );
-
-            }
-
-
-            return cleanValue(
-                row[selectedColumn]
-            )
-                .toLowerCase()
-                .includes(search);
-
-        });
-
-
-    currentPage = 1;
-
-
-    renderMainTable();
+  };
 
 }
 
 
 /* =====================================================
-   RENDER MAIN TABLE
+   GET SHEET DATA
 ===================================================== */
 
-function renderMainTable() {
+function getSheetData(gid) {
 
-    const total =
-        filteredRows.length;
-
-
-    const totalPages =
-        Math.max(
-            1,
-            Math.ceil(
-                total /
-                ROWS_PER_PAGE
-            )
-        );
-
-
-    if (currentPage > totalPages) {
-
-        currentPage =
-            totalPages;
-
-    }
-
-
-    const start =
-        (currentPage - 1) *
-        ROWS_PER_PAGE;
-
-
-    const pageRows =
-        filteredRows.slice(
-            start,
-            start + ROWS_PER_PAGE
-        );
-
-
-    if (pageRows.length === 0) {
-
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="100" class="loading-row">
-                    No records found.
-                </td>
-            </tr>
-        `;
-
-    }
-
-    else {
-
-        tableBody.innerHTML =
-            pageRows
-                .map(
-                    (row, index) =>
-                        createTableRow(
-                            row,
-                            start + index + 1
-                        )
-                )
-                .join("");
-
-    }
-
-
-    recordCount.textContent =
-        total + " Records";
-
-
-    renderPagination(
-        totalPages
-    );
-
-}
-
-
-/* =====================================================
-   RENDER ALL RECORDS
-===================================================== */
-
-function renderAllRecords() {
-
-    allTableHead.innerHTML = "";
-
-    allTableBody.innerHTML = "";
-
-
-    createTableHeader(
-        allTableHead
+  const spreadsheet =
+    SpreadsheetApp.openById(
+      SPREADSHEET_ID
     );
 
 
-    if (sheetRows.length === 0) {
-
-        allTableBody.innerHTML = `
-            <tr>
-                <td colspan="100" class="loading-row">
-                    No records found.
-                </td>
-            </tr>
-        `;
-
-    }
-
-    else {
-
-        allTableBody.innerHTML =
-            sheetRows
-                .map(
-                    (row, index) =>
-                        createTableRow(
-                            row,
-                            index + 1
-                        )
-                )
-                .join("");
-
-    }
+  const sheets =
+    spreadsheet.getSheets();
 
 
-    allRecordCount.textContent =
-        sheetRows.length +
-        " Records";
-
-}
+  let targetSheet = null;
 
 
-/* =====================================================
-   PAGINATION
-===================================================== */
-
-function renderPagination(totalPages) {
-
-    pagination.innerHTML = "";
-
-
-    if (totalPages <= 1) {
-
-        return;
-
-    }
-
-
-    const previous =
-        document.createElement("button");
-
-
-    previous.className =
-        "page-button";
-
-
-    previous.innerHTML = "‹";
-
-
-    previous.disabled =
-        currentPage === 1;
-
-
-    previous.onclick = () => {
-
-        if (currentPage > 1) {
-
-            currentPage--;
-
-            renderMainTable();
-
-        }
-
-    };
-
-
-    pagination.appendChild(
-        previous
-    );
-
-
-    /*
-       Page buttons
-    */
-
-    const maxButtons = 7;
-
-    let startPage =
-        Math.max(
-            1,
-            currentPage -
-            Math.floor(maxButtons / 2)
-        );
-
-
-    let endPage =
-        Math.min(
-            totalPages,
-            startPage +
-            maxButtons -
-            1
-        );
-
+  for (
+    let i = 0;
+    i < sheets.length;
+    i++
+  ) {
 
     if (
-        endPage - startPage + 1 <
-        maxButtons
+      String(
+        sheets[i].getSheetId()
+      ) === String(gid)
     ) {
 
-        startPage =
-            Math.max(
-                1,
-                endPage -
-                maxButtons +
-                1
-            );
+      targetSheet =
+        sheets[i];
+
+      break;
 
     }
 
-
-    for (
-        let i = startPage;
-        i <= endPage;
-        i++
-    ) {
-
-        const button =
-            document.createElement("button");
+  }
 
 
-        button.className =
-            "page-button";
+  if (!targetSheet) {
+
+    throw new Error(
+      "Sheet not found: " + gid
+    );
+
+  }
 
 
-        if (i === currentPage) {
-
-            button.classList.add(
-                "active"
-            );
-
-        }
+  const lastRow =
+    targetSheet.getLastRow();
 
 
-        button.textContent =
-            i;
+  const lastColumn =
+    targetSheet.getLastColumn();
 
 
-        button.onclick = () => {
+  /* =========================
+     EMPTY SHEET
+  ========================= */
 
-            currentPage = i;
+  if (
+    lastRow === 0 ||
+    lastColumn === 0
+  ) {
 
-            renderMainTable();
+    return {
 
-        };
+      success: true,
 
+      gid: String(gid),
 
-        pagination.appendChild(
-            button
-        );
+      name:
+        targetSheet.getName(),
 
-    }
+      headers: [],
 
-
-    const next =
-        document.createElement("button");
-
-
-    next.className =
-        "page-button";
-
-
-    next.innerHTML = "›";
-
-
-    next.disabled =
-        currentPage === totalPages;
-
-
-    next.onclick = () => {
-
-        if (
-            currentPage <
-            totalPages
-        ) {
-
-            currentPage++;
-
-            renderMainTable();
-
-        }
+      rows: []
 
     };
 
-
-    pagination.appendChild(
-        next
-    );
-
-}
+  }
 
 
-/* =====================================================
-   COLUMN FILTER
-===================================================== */
+  /* =========================
+     READ SHEET
+  ========================= */
 
-function renderColumnFilter() {
-
-    columnFilter.innerHTML = `
-        <option value="all">
-            All Columns
-        </option>
-    `;
-
-
-    sheetHeaders.forEach(header => {
-
-        const option =
-            document.createElement("option");
+  const values =
+    targetSheet
+      .getRange(
+        1,
+        1,
+        lastRow,
+        lastColumn
+      )
+      .getDisplayValues();
 
 
-        option.value =
-            header;
+  if (!values.length) {
+
+    return {
+
+      success: true,
+
+      gid: String(gid),
+
+      name:
+        targetSheet.getName(),
+
+      headers: [],
+
+      rows: []
+
+    };
+
+  }
 
 
-        option.textContent =
-            header;
+  /* =========================
+     FIRST ROW = HEADERS
+  ========================= */
 
+  const headers =
+    values[0].map(function(header) {
 
-        columnFilter.appendChild(
-            option
-        );
-
-    });
-
-}
-
-
-/* =====================================================
-   DASHBOARD STATS
-===================================================== */
-
-function renderStats() {
-
-    /*
-       Existing total card ko rakho.
-       Dynamic cards ko remove karo.
-    */
-
-    const cards =
-        statsContainer.querySelectorAll(
-            ".stat-card"
-        );
-
-
-    cards.forEach(
-        (card, index) => {
-
-            if (index > 0) {
-
-                card.remove();
-
-            }
-
-        }
-    );
-
-
-    sheetHeaders.forEach(header => {
-
-        if (
-            isHiddenDashboardColumn(
-                header
-            )
-        ) {
-
-            return;
-
-        }
-
-
-        const filledCount =
-            sheetRows.filter(
-                row =>
-                    cleanValue(
-                        row[header]
-                    ) !== ""
-            ).length;
-
-
-        const card =
-            document.createElement(
-                "div"
-            );
-
-
-        card.className =
-            "stat-card";
-
-
-        card.innerHTML = `
-            <div class="stat-label">
-                ${escapeHTML(header)}
-            </div>
-
-            <div class="stat-number">
-                ${filledCount}
-            </div>
-
-            <div class="stat-description">
-                Filled records
-            </div>
-        `;
-
-
-        statsContainer.appendChild(
-            card
-        );
+      return String(
+        header || ""
+      ).trim();
 
     });
 
-}
+
+  const rows = [];
 
 
-/* =====================================================
-   COLUMN CARDS
-===================================================== */
+  /* =========================
+     DATA ROWS
+  ========================= */
 
-function renderColumnCards() {
+  for (
+    let i = 1;
+    i < values.length;
+    i++
+  ) {
 
-    columnCards.innerHTML = "";
+    const row =
+      values[i];
 
 
-    if (sheetHeaders.length === 0) {
+    const hasData =
+      row.some(function(value) {
 
-        columnCards.innerHTML = `
-            <div class="loading-row">
-                No columns found.
-            </div>
-        `;
+        return String(
+          value || ""
+        ).trim() !== "";
 
-        return;
+      });
+
+
+    if (!hasData) {
+
+      continue;
 
     }
 
 
-    sheetHeaders.forEach(
-        (header, index) => {
-
-            const filledCount =
-                sheetRows.filter(
-                    row =>
-                        cleanValue(
-                            row[header]
-                        ) !== ""
-                ).length;
+    const object = {};
 
 
-            const card =
-                document.createElement(
-                    "div"
-                );
+    headers.forEach(
+      function(header, index) {
 
+        object[header] =
+          String(
+            row[index] || ""
+          ).trim();
 
-            card.className =
-                "column-card";
-
-
-            card.innerHTML = `
-                <div class="column-card-icon">
-                    <i class="fa-solid fa-table-columns"></i>
-                </div>
-
-                <h3>
-                    ${escapeHTML(header)}
-                </h3>
-
-                <div class="column-card-count">
-                    ${filledCount}
-                </div>
-
-                <small>
-                    ${sheetRows.length} total records
-                </small>
-            `;
-
-
-            columnCards.appendChild(
-                card
-            );
-
-        }
+      }
     );
+
+
+    rows.push(object);
+
+  }
+
+
+  return {
+
+    success: true,
+
+    gid: String(gid),
+
+    name:
+      targetSheet.getName(),
+
+    headers: headers,
+
+    rows: rows
+
+  };
 
 }
 
 
 /* =====================================================
-   NAVIGATION
+   JSON RESPONSE
 ===================================================== */
 
-function setupNavigation() {
+function jsonResponse(data) {
 
-    const navItems =
-        document.querySelectorAll(
-            ".nav-item"
-        );
+  return ContentService
 
+    .createTextOutput(
+      JSON.stringify(data)
+    )
 
-    const views =
-        document.querySelectorAll(
-            ".view"
-        );
+    .setMimeType(
+      ContentService.MimeType.JSON
+    );
 
-
-    const pageTitle =
-        document.getElementById(
-            "pageTitle"
-        );
-
-
- 
+}
